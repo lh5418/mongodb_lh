@@ -8,7 +8,7 @@ spring:
     time-zone: GMT+8
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/test_four
+    url: jdbc:mysql://192.168.1.38:3306/20066
     username: root
     password: root
   data:
