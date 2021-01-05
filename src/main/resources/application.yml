@@ -13,7 +13,7 @@ spring:
     password: root
   data:
     mongodb:
-      uri: mongodb://localhost:27017/2006
+      uri: mongodb://192.168.1.38:27017/2006
 mybatis:
   #mybatisxml文件的地址
   mapper-locations: classpath:mapper/*.xml
