@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!-- 引入jquery.js文件 -->
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <!-- 引入easyui的js文件 -->
+    <script type="text/javascript" src="../js/jquery-easyui-1.5/jquery.easyui.min.js"></script>
+    <!-- 引入easyui的中文js文件 -->
+    <script type="text/javascript" src="../js/jquery-easyui-1.5/locale/easyui-lang-zh_CN.js"></script>
+
+    <!-- 引入easyui的css文件 -->
+    <link rel="stylesheet" href="../js/jquery-easyui-1.5/themes/default/easyui.css">
+    <!-- 引入easyui图标的css文件 -->
+    <link rel="stylesheet" href="../js/jquery-easyui-1.5/themes/icon.css">
+
+    <!-- 引入uploadify的css、js -->
+    <link type="text/css" rel="stylesheet" href="../js/uploadify/uploadify.css">
+    <script type="text/javascript" src="../js/uploadify/jquery.uploadify.min.js"></script>
+</head>
+<body>
+<div id="mydiv">
+    账单名称：<input class="easyui-textbox" id="name">
+    消费时间：<input class="easyui-datebox" id="mindate">-
+            <input class="easyui-datebox" id="maxdate">
+    <a  href="javascript:searchZhang()" class="easyui-linkbutton" data-options="iconCls:'icon-search',plain:true">搜索</a>
+    <a href="javascript:openAdd()" class="easyui-linkbutton" data-options="iconCls:'icon-add',plain:true">新增</a>
+    <a href="javascript:deleteAll()" class="easyui-linkbutton" data-options="iconCls:'icon-remove',plain:true">批删</a>
+</div>
+<div id="zhangDialog" class="easyui-dialog" data-options="closed:true,width:500,height:400,modal:true,buttons:'#buttons'">
+    <form id="zhangForm" method="post">
+        <input name="id" style="display:none">
+        <table>
+            <tr>
+                <td>账单名称</td>
+                <td><input class="easyui-textbox" name="name"></td>
+            </tr>
+            <tr>
+                <td>消费金额</td>
+                <td><input class="easyui-textbox" name="money"></td>
+            </tr>
+            <tr>
+                <td>账单内容</td>
+                <td><input class="easyui-textbox" name="info"></td>
+            </tr>
+            <tr>
+                <td>消费时间</td>
+                <td><input class="easyui-datebox" name="time"></td>
+            </tr>
+        </table>
+    </form>
+</div>
+<!-- 定义对话框的按钮 -->
+<div id="buttons">
+    <a href="javascript:saveZhang()" class="easyui-linkbutton" data-options="iconCls:'icon-ok',plain:true">确定</a>
+    <a href="javascript:closeDialog()" class="easyui-linkbutton" data-options="iconCls:'icon-cancel',plain:true">取消</a>
+</div>
+
+
+
+<table id="mytable"></table>
+</body>
+<script>
+    $(function () {
+        initTable();
+    })
+    //打开修改弹框：回显表单数据
+    function updateZhang(id){
+        $.ajax({
+            url:"../test/findZhangById",
+            type:"post",
+            data:{id:id},
+            success:function(data){
+                //回显表单数据
+                $("#zhangForm").form("load",data);
+                //打开弹框
+                $("#zhangDialog").dialog({
+                    closed:false,
+                    title:'修改账单'
+                });
+            }
+        })
+    }
+
+    //删除
+    function deleteAll() {
+        var arr = $("#mytable").datagrid("getChecked");
+        var ids = "";
+        for (var i = 0; i < arr.length; i++) {
+            //alert(arr[i].id);
+            ids += (ids == "" ? arr[i].id : ("," + arr[i].id));
+        }
+        //alert(ids);
+        if (ids == "") {
+            $.messager.alert("提示", "请至少选中一条数据！", "info");
+            return;
+        }
+        delZhang(ids);
+    }
+        function delZhang(id){
+        $.messager.confirm("提示","是否确认删除？",function(r){
+            //alert(r);
+            if(r){
+                $.ajax({
+                    url:"../test/deleteZhang",
+                    type:"post",
+                    data:{ids:id},
+                    success:function(){
+
+                        $.messager.alert("我的消息","删除成功！！！","info");
+
+                        searchZhang();
+
+                    }
+                });
+            }
+        });
+    }
+
+    //条查
+    function searchZhang() {
+        $('#mytable').datagrid("load",{
+            name:$("#name").textbox("getValue"),
+            mindate:$("#mindate").datebox("getValue"),
+            maxdate:$("#maxdate").datebox("getValue")
+        })
+    }
+    //保存账单
+    function saveZhang(){
+        $("#zhangForm").form("submit",{
+            url:"../test/addZhang",
+            success:function(){
+                //关闭弹框
+                closeDialog();
+                //刷新表格
+                $('#mytable').datagrid("load");
+            }
+        });
+    }
+
+
+    //打开新增弹框
+    function openAdd(){
+        //清除表单缓存
+        $("#zhangForm").form("reset");
+        $("#zhangDialog").dialog({
+            closed:false,
+            title:'新增账单'
+        });
+
+    }
+
+    //关闭新增弹框
+    function closeDialog(){
+        $("#zhangDialog").dialog("close");
+    }
+
+    //初始化加载表格
+    function initTable() {
+        $('#mytable').datagrid({
+            url: '/test/findZhang',//获取数据地址
+            toolbar:"#mydiv",
+            columns: [
+                [
+                    {field:"checkbox",checkbox:true},
+                    {field: 'id', title: 'id'},
+                    {field: 'name', title: '账单名称'},
+                    {field: 'money', title: '消费金额'},
+                    {field: 'info', title: '账单内容'},
+                    {field: 'time', title: '消费时间'},
+                    {
+                        field: 'caozuo', title: '操作', formatter: function (value, row, index) {
+                            var str="";
+                            str+="<a  href='javascript:updateZhang(\""+ row.id+"\")'>修改</a> ";
+                            str+="<a  href='javascript:delZhang(\""+ row.id+"\")'>删除</a> ";
+                            return str;
+                        }
+                    }
+                ]
+            ],
+            pagination:true,
+            pageSize:2,
+            pageList:[1,2,3,4,5],
+        });
+
+    }
+</script>
+</html>
